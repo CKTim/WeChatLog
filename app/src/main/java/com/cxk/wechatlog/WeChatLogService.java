@@ -72,7 +72,7 @@ public class WeChatLogService extends AccessibilityService {
         for (int i = 0; i < node.getChildCount(); i++) {
             AccessibilityNodeInfo node1 = node.getChild(i);
             if ("android.widget.ImageView".equals(node1.getClassName()) && node1.isClickable()) {
-                //判断是否是重复消息
+                //获取聊天对象
                 ChatName = node1.getContentDescription().toString().replace("头像", "");
             }
             GetChatName(node1);
@@ -88,6 +88,7 @@ public class WeChatLogService extends AccessibilityService {
         for (int i = 0; i < node.getChildCount(); i++) {
             AccessibilityNodeInfo node1 = node.getChild(i);
             if ("android.widget.TextView".equals(node1.getClassName())) {
+                //获取聊天记录
                 String chatRecord1 = node1.getText().toString();
                 //检查下是不是重复消息，防止多次显示
                 if (!TextUtils.isEmpty(chatRecord1)) {
