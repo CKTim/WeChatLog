@@ -26,7 +26,7 @@ public class WeChatLogService extends AccessibilityService {
     /**
      * 聊天最新一条记录
      */
-    private String ChatRecord = "test";
+    private String ChatRecord = "cxk";
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -44,7 +44,7 @@ public class WeChatLogService extends AccessibilityService {
     }
 
     /**
-     * 遍历
+     * 遍历所有控件获取聊天信息
      *
      * @param rootNode
      */
@@ -52,41 +52,54 @@ public class WeChatLogService extends AccessibilityService {
     private void getWeChatLog(AccessibilityNodeInfo rootNode) {
         if (rootNode != null) {
             //获取所有聊天的线性布局
-            List<AccessibilityNodeInfo> listChatRecord = rootNode.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/o");
-            if(listChatRecord.size()==0){
+            List<AccessibilityNodeInfo> listChatRecord = rootNode.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/p");
+            if (listChatRecord.size() == 0) {
                 return;
             }
             //获取最后一行聊天的线性布局（即是最新的那条消息）
             AccessibilityNodeInfo finalNode = listChatRecord.get(listChatRecord.size() - 1);
-            //获取聊天对象list（其实只有size为1）
-            List<AccessibilityNodeInfo> imageName = finalNode.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/i_");
-            //获取聊天信息list（其实只有size为1）
-            List<AccessibilityNodeInfo> record = finalNode.findAccessibilityNodeInfosByViewId("com.tencent.mm:id/ib");
-            if (imageName.size() != 0) {
-                if (record.size() == 0) {
-                    //判断当前这条消息是不是和上一条一样，防止重复
-                    if (!ChatRecord.equals("对方发的是图片或者表情")) {
-                        //获取聊天对象
-                        ChatName = imageName.get(0).getContentDescription().toString().replace("头像", "");
-                        //获取聊天信息
-                        ChatRecord = "对方发的是图片或者表情";
+            //获取聊天对象
+            GetChatName(finalNode);
+            //获取聊天内容
+            GetChatRecord(finalNode);
+        }
+    }
 
-                        Log.e("AAAA", ChatName + "：" + "对方发的是图片或者表情");
-                        Toast.makeText(this, ChatName + "：" + ChatRecord, Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    //判断当前这条消息是不是和上一条一样，防止重复
-                    if (!ChatRecord.equals(record.get(0).getText().toString())) {
-                        //获取聊天对象
-                        ChatName = imageName.get(0).getContentDescription().toString().replace("头像", "");
-                        //获取聊天信息
-                        ChatRecord = record.get(0).getText().toString();
+    /**
+     * 遍历所有控件，找到联系人，头像Imagview里面有
+     */
+    private void GetChatName(AccessibilityNodeInfo node) {
+        for (int i = 0; i < node.getChildCount(); i++) {
+            AccessibilityNodeInfo node1 = node.getChild(i);
+            if ("android.widget.ImageView".equals(node1.getClassName()) && node1.isClickable()) {
+                //判断是否是重复消息
+                ChatName = node1.getContentDescription().toString().replace("头像", "");
+            }
+            GetChatName(node1);
+        }
+    }
 
-                        Log.e("AAAA", ChatName + "：" + ChatRecord);
-                        Toast.makeText(this, ChatName + "：" + ChatRecord, Toast.LENGTH_SHORT).show();
+    /**
+     * 遍历所有控件，找到TextView，因为里面只有一个Textview装载着聊天信息
+     *
+     * @param node
+     */
+    public void GetChatRecord(AccessibilityNodeInfo node) {
+        for (int i = 0; i < node.getChildCount(); i++) {
+            AccessibilityNodeInfo node1 = node.getChild(i);
+            if ("android.widget.TextView".equals(node1.getClassName())) {
+                String chatRecord1 = node1.getText().toString();
+                //检查下是不是重复消息，防止多次显示
+                if (!TextUtils.isEmpty(chatRecord1)) {
+                    if (!chatRecord1.equals(ChatRecord)) {
+                        ChatRecord = chatRecord1;
+                        Toast.makeText(this, ChatName + ":" + ChatRecord, Toast.LENGTH_SHORT).show();
+                        return;
                     }
                 }
+                GetChatRecord(node1);
             }
+
         }
     }
 
